@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MITC Voucher Dashboard — India Map</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container-wrapper">
+        <div class="header">
+            <h1>MITC Voucher Distribution Dashboard</h1>
+            <p>
+                <strong>Users Demo</strong> — distinct users (<code>um_uuid</code>) by state, filterable by
+                MITC / NON-MITC, age, and gender.
+                <strong>Map</strong> — MITC voucher counts from <code>current_zipCode</code> (pincode).
+            </p>
+        </div>
+
+        <section class="section-card users-demo-section">
+            <h2 class="section-title">Users Demo</h2>
+            <p class="section-desc">Distinct users (<code>um_uuid</code>) by age category and MITC vs NON-MITC. Filter by MITC flag, gender, and state.</p>
+            <div class="controls demo-controls">
+                <div class="filters">
+                    <div class="filter-group filter-checkboxes">
+                        <span class="filter-label">MITC flag</span>
+                        <label class="checkbox-label"><input type="checkbox" id="demoMitc" checked onchange="updateUserDemo()"> MITC</label>
+                        <label class="checkbox-label"><input type="checkbox" id="demoNonMitc" checked onchange="updateUserDemo()"> NON-MITC</label>
+                    </div>
+                    <div class="filter-group">
+                        <label for="demoAge">Age category</label>
+                        <select id="demoAge" onchange="updateUserDemo()">
+                            <option value="All">All ages</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="demoGender">Gender</label>
+                        <select id="demoGender" onchange="updateUserDemo()">
+                            <option value="All">All genders</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="demoState">State</label>
+                        <select id="demoState" onchange="updateUserDemo()">
+                            <option value="All">All states</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="demo-stat">
+                    <span class="demo-stat-label">Distinct users (filtered)</span>
+                    <span class="demo-stat-value" id="demoUserTotal">—</span>
+                </div>
+            </div>
+            <div class="demo-charts-grid">
+                <div class="demo-chart-panel">
+                    <h3 class="demo-chart-heading">By age category</h3>
+                    <div id="userDemoChart"></div>
+                </div>
+                <div class="demo-chart-panel">
+                    <h3 class="demo-chart-heading">MITC vs NON-MITC</h3>
+                    <div id="userMitcChart"></div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section-card map-section">
+            <h2 class="section-title">Voucher map (MITC only)</h2>
+            <div class="controls">
+                <div class="filters">
+                    <div class="filter-group">
+                        <label for="ageFilter">Age category</label>
+                        <select id="ageFilter" onchange="updateMap()">
+                            <option value="All">All ages</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="genderFilter">Gender</label>
+                        <select id="genderFilter" onchange="updateMap()">
+                            <option value="All">All genders</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="action-buttons">
+                    <button class="btn btn-deselect" id="deselectBtn" onclick="deselectAll()" disabled>
+                        Deselect all states
+                    </button>
+                </div>
+            </div>
+
+            <div id="container">
+                <div class="loading-msg">
+                    <h3>Loading map…</h3>
+                    <p>Fetching India topology and voucher counts</p>
+                </div>
+            </div>
+
+            <div class="info-panel">
+                <div class="stats">
+                    <h3>MITC voucher count</h3>
+                    <p id="totalRecords">—</p>
+                </div>
+                <div class="stats">
+                    <h3>States with data</h3>
+                    <p id="statesCovered">—</p>
+                </div>
+                <div class="stats">
+                    <h3>Filtered count</h3>
+                    <p id="filteredCount">—</p>
+                </div>
+                <div class="selected-states">
+                    <h3>Selected states (<span id="selectedCount">0</span>)</h3>
+                    <div class="selected-list" id="selectedList">
+                        <span class="muted">Click states on the map to select</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="state-table-wrap">
+                <h2>Count by state (current filter)</h2>
+                <table id="stateTable">
+                    <thead>
+                        <tr>
+                            <th>State</th>
+                            <th>Vouchers</th>
+                        </tr>
+                    </thead>
+                    <tbody id="stateTableBody"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="section-card trend-section">
+            <h2 class="section-title">Trend</h2>
+            <p class="section-desc">MITC vouchers over <code>txn</code> date. Filter by age/gender, then split lines by total, age category, or gender.</p>
+            <div class="controls trend-controls">
+                <div class="filters">
+                    <div class="filter-group">
+                        <label for="trendAgeFilter">Age category</label>
+                        <select id="trendAgeFilter" onchange="updateTrend()">
+                            <option value="All">All ages</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="trendGenderFilter">Gender</label>
+                        <select id="trendGenderFilter" onchange="updateTrend()">
+                            <option value="All">All genders</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="trendSplitBy">Split lines by</label>
+                        <select id="trendSplitBy" onchange="updateTrend()">
+                            <option value="total">Total (single line)</option>
+                            <option value="age">Age category</option>
+                            <option value="gender">Gender</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="demo-stat">
+                    <span class="demo-stat-label">Vouchers (filtered)</span>
+                    <span class="demo-stat-value" id="trendTotal">—</span>
+                </div>
+            </div>
+            <div id="trendChart"></div>
+        </section>
+
+        <section class="section-card lifetime-section">
+            <h2 class="section-title">Customer lifetime</h2>
+            <p class="section-desc">
+                Per user (<code>um_uuid</code>): total <code>voucherAmount</code> purchased (lifetime sum).
+                Filter by MITC flag, age, and gender. X-axis = purchase amount band; Y-axis = user count.
+            </p>
+            <div class="controls lifetime-controls">
+                <div class="filters">
+                    <div class="filter-group filter-checkboxes">
+                        <span class="filter-label">MITC flag</span>
+                        <label class="checkbox-label"><input type="checkbox" id="lifetimeMitc" checked onchange="updateLifetime()"> MITC</label>
+                        <label class="checkbox-label"><input type="checkbox" id="lifetimeNonMitc" checked onchange="updateLifetime()"> NON-MITC</label>
+                    </div>
+                    <div class="filter-group">
+                        <label for="lifetimeAgeFilter">Age category</label>
+                        <select id="lifetimeAgeFilter" onchange="updateLifetime()">
+                            <option value="All">All ages</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="lifetimeGenderFilter">Gender</label>
+                        <select id="lifetimeGenderFilter" onchange="updateLifetime()">
+                            <option value="All">All genders</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="demo-stat">
+                    <span class="demo-stat-label">Users (filtered)</span>
+                    <span class="demo-stat-value" id="lifetimeUserTotal">—</span>
+                </div>
+            </div>
+            <div id="lifetimeChart"></div>
+        </section>
+    </div>
+
+    <!-- highcharts.js first, then map module (do not load highmaps.js — it conflicts) -->
+    <script src="https://code.highcharts.com/highcharts.js"></script>
+    <script src="https://code.highcharts.com/maps/modules/map.js"></script>
+    <script src="https://code.highcharts.com/modules/exporting.js"></script>
+    <!-- Lifetime chart loads before data.js (data.js is ~3.7MB and blocks parsing) -->
+    <script src="lifetime-histograms.js?v=7"></script>
+    <script src="lifetime-chart.js?v=7"></script>
+    <script src="data.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

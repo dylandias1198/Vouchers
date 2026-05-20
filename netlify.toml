@@ -1,0 +1,10 @@
+# Netlify: connect repo or run `netlify deploy --prod --dir=mitc_voucher_map`
+
+[build]
+  publish = "mitc_voucher_map"
+  command = "echo 'Using committed data.js; run generate_map.py locally to refresh data'"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Cache-Control = "public, max-age=300"
